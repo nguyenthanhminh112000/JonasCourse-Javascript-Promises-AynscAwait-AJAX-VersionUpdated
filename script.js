@@ -155,4 +155,45 @@ function getJSON(url, errorMSG = `Something went wrong`) {
 // });
 // console.log(`Test end`);
 
-// //////////////////////////////////// THE EVENT LOOP IN PRACTICE
+// //////////////////////////////////// BUILD A SIMPLE PROMISE
+setTimeout(() => {
+  console.log(`Set time out`);
+}, 0);
+
+const lotteryPromise = new Promise((resolve, reject) => {
+  setTimeout(() => {
+    if (Math.random() > 0.5) {
+      resolve(`You are the winner`);
+    } else {
+      reject(new Error(`You are the loser`));
+    }
+  }, 0);
+});
+
+lotteryPromise
+  .then(data => {
+    console.log(data);
+  })
+  .catch(err => {
+    console.error(err);
+  });
+
+const wait = seconds => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve();
+    }, seconds * 1000);
+  });
+};
+
+wait(2)
+  .then(() => {
+    console.log(`I waited here at least 2 seconds`);
+    return wait(3);
+  })
+  .then(() => {
+    console.log(`I have waited here at least 3 seconds`);
+  })
+  .catch(err => {
+    console.error(err);
+  });
