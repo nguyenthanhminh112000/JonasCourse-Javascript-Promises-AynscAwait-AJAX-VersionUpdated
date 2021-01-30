@@ -155,45 +155,101 @@ function getJSON(url, errorMSG = `Something went wrong`) {
 // });
 // console.log(`Test end`);
 
-// //////////////////////////////////// BUILD A SIMPLE PROMISE
-setTimeout(() => {
-  console.log(`Set time out`);
-}, 0);
+// // //////////////////////////////////// BUILD A SIMPLE PROMISE
+// setTimeout(() => {
+//   console.log(`Set time out`);
+// }, 0);
 
-const lotteryPromise = new Promise((resolve, reject) => {
-  setTimeout(() => {
-    if (Math.random() > 0.5) {
-      resolve(`You are the winner`);
-    } else {
-      reject(new Error(`You are the loser`));
-    }
-  }, 0);
-});
+// const lotteryPromise = new Promise((resolve, reject) => {
+//   setTimeout(() => {
+//     if (Math.random() > 0.5) {
+//       resolve(`You are the winner`);
+//     } else {
+//       reject(new Error(`You are the loser`));
+//     }
+//   }, 0);
+// });
 
-lotteryPromise
-  .then(data => {
-    console.log(data);
-  })
-  .catch(err => {
+// lotteryPromise
+//   .then(data => {
+//     console.log(data);
+//   })
+//   .catch(err => {
+//     console.error(err);
+//   });
+
+// const wait = seconds => {
+//   return new Promise(resolve => {
+//     setTimeout(() => {
+//       resolve();
+//     }, seconds * 1000);
+//   });
+// };
+
+// wait(2)
+//   .then(() => {
+//     console.log(`I waited here at least 2 seconds`);
+//     return wait(3);
+//   })
+//   .then(() => {
+//     console.log(`I have waited here at least 3 seconds`);
+//   })
+//   .catch(err => {
+//     console.error(err);
+//   });
+
+///////////////////////////// PROMISIFYING THE GEOLOCATION API
+navigator.geolocation.getCurrentPosition(
+  position => {
+    console.log(position);
+  },
+  err => {
     console.error(err);
-  });
+  }
+);
 
-const wait = seconds => {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve();
-    }, seconds * 1000);
+const getCurPosition = () => {
+  return new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        resolve(position);
+      },
+      err => {
+        reject(err);
+      }
+    );
   });
 };
 
-wait(2)
-  .then(() => {
-    console.log(`I waited here at least 2 seconds`);
-    return wait(3);
-  })
-  .then(() => {
-    console.log(`I have waited here at least 3 seconds`);
-  })
-  .catch(err => {
-    console.error(err);
-  });
+function whereAmI() {
+  getCurPosition()
+    .then(position => {
+      const { latitude, longitude } = position.coords;
+      return fetch(`https://geocode.xyz/${latitude},${longitude}?geoit=json`);
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Overload the request (${response.status})`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      return fetch(`https://restcountries.eu/rest/v2/name/${data.country}`);
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Cant find the country`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      renderCountry(data[0]);
+    })
+    .catch(err => {
+      console.log(`${err}`);
+    })
+    .finally(() => {
+      countriesContainer.style.opacity = 1;
+    });
+}
+btn.addEventListener('click', whereAmI);
