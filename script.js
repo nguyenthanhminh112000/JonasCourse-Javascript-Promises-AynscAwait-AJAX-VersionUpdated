@@ -198,58 +198,100 @@ function getJSON(url, errorMSG = `Something went wrong`) {
 //     console.error(err);
 //   });
 
-///////////////////////////// PROMISIFYING THE GEOLOCATION API
-navigator.geolocation.getCurrentPosition(
-  position => {
-    console.log(position);
-  },
-  err => {
-    console.error(err);
-  }
-);
+// /////////////////////////// PROMISIFYING THE GEOLOCATION API
+// navigator.geolocation.getCurrentPosition(
+//   position => {
+//     console.log(position);
+//   },
+//   err => {
+//     console.error(err);
+//   }
+// );
 
-const getCurPosition = () => {
+// const getCurPosition = () => {
+//   return new Promise((resolve, reject) => {
+//     navigator.geolocation.getCurrentPosition(
+//       position => {
+//         resolve(position);
+//       },
+//       err => {
+//         reject(err);
+//       }
+//     );
+//   });
+// };
+
+// function whereAmI() {
+//   getCurPosition()
+//     .then(position => {
+//       const { latitude, longitude } = position.coords;
+//       return fetch(`https://geocode.xyz/${latitude},${longitude}?geoit=json`);
+//     })
+//     .then(response => {
+//       if (!response.ok) {
+//         throw new Error(`Overload the request (${response.status})`);
+//       }
+//       return response.json();
+//     })
+//     .then(data => {
+//       return fetch(`https://restcountries.eu/rest/v2/name/${data.country}`);
+//     })
+//     .then(response => {
+//       if (!response.ok) {
+//         throw new Error(`Cant find the country`);
+//       }
+//       return response.json();
+//     })
+//     .then(data => {
+//       renderCountry(data[0]);
+//     })
+//     .catch(err => {
+//       console.log(`${err}`);
+//     })
+//     .finally(() => {
+//       countriesContainer.style.opacity = 1;
+//     });
+// }
+// btn.addEventListener('click', whereAmI);
+
+///////////////////////////////// CODING CHALLENGE 2
+const wait = (seconds, node) => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve(node);
+    }, seconds * 1000);
+  });
+};
+const createImage = url => {
   return new Promise((resolve, reject) => {
-    navigator.geolocation.getCurrentPosition(
-      position => {
-        resolve(position);
-      },
-      err => {
-        reject(err);
-      }
-    );
+    const imageNode = document.createElement('img');
+    imageNode.src = url;
+    imageNode.addEventListener('load', () => {
+      resolve(imageNode);
+    });
+    imageNode.addEventListener('error', () => {
+      reject(new Error('Image not found'));
+    });
   });
 };
 
-function whereAmI() {
-  getCurPosition()
-    .then(position => {
-      const { latitude, longitude } = position.coords;
-      return fetch(`https://geocode.xyz/${latitude},${longitude}?geoit=json`);
-    })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(`Overload the request (${response.status})`);
-      }
-      return response.json();
-    })
-    .then(data => {
-      return fetch(`https://restcountries.eu/rest/v2/name/${data.country}`);
-    })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(`Cant find the country`);
-      }
-      return response.json();
-    })
-    .then(data => {
-      renderCountry(data[0]);
-    })
-    .catch(err => {
-      console.log(`${err}`);
-    })
-    .finally(() => {
-      countriesContainer.style.opacity = 1;
-    });
-}
-btn.addEventListener('click', whereAmI);
+const imgContainer = document.querySelector('.images');
+createImage('./img/img-1.jpg')
+  .then(imageNode => {
+    imgContainer.appendChild(imageNode);
+    return wait(2, imageNode);
+  })
+  .then(imageNode => {
+    imageNode.style.display = 'none';
+    return createImage('./img/img-2.jpg');
+  })
+  .then(imageNode2 => {
+    imgContainer.appendChild(imageNode2);
+    return wait(2, imageNode2);
+  })
+  .then(imageNode2 => {
+    imageNode2.style.display = 'none';
+  })
+  .catch(err => {
+    console.error(err);
+  });
