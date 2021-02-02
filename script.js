@@ -18,6 +18,7 @@ function renderCountry(data) {
     </article>
     `;
   countriesContainer.insertAdjacentHTML('afterbegin', markup);
+  countriesContainer.style.opacity = 1;
 }
 function renderError(msg) {
   countriesContainer.insertAdjacentText('beforeend', msg);
@@ -255,43 +256,100 @@ function getJSON(url, errorMSG = `Something went wrong`) {
 // btn.addEventListener('click', whereAmI);
 
 ///////////////////////////////// CODING CHALLENGE 2
-const wait = (seconds, node) => {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve(node);
-    }, seconds * 1000);
-  });
-};
-const createImage = url => {
+// const wait = (seconds, node) => {
+//   return new Promise(resolve => {
+//     setTimeout(() => {
+//       resolve(node);
+//     }, seconds * 1000);
+//   });
+// };
+// const createImage = url => {
+//   return new Promise((resolve, reject) => {
+//     const imageNode = document.createElement('img');
+//     imageNode.src = url;
+//     imageNode.addEventListener('load', () => {
+//       resolve(imageNode);
+//     });
+//     imageNode.addEventListener('error', () => {
+//       reject(new Error('Image not found'));
+//     });
+//   });
+// };
+
+// const imgContainer = document.querySelector('.images');
+// createImage('./img/img-1.jpg')
+//   .then(imageNode => {
+//     imgContainer.appendChild(imageNode);
+//     return wait(2, imageNode);
+//   })
+//   .then(imageNode => {
+//     imageNode.style.display = 'none';
+//     return createImage('./img/img-2.jpg');
+//   })
+//   .then(imageNode2 => {
+//     imgContainer.appendChild(imageNode2);
+//     return wait(2, imageNode2);
+//   })
+//   .then(imageNode2 => {
+//     imageNode2.style.display = 'none';
+//   })
+//   .catch(err => {
+//     console.error(err);
+//   });
+
+///////////////////////////////// CONSUME PROMISE WITH ASYNC-AWAIT
+const getCurPosition = () => {
   return new Promise((resolve, reject) => {
-    const imageNode = document.createElement('img');
-    imageNode.src = url;
-    imageNode.addEventListener('load', () => {
-      resolve(imageNode);
-    });
-    imageNode.addEventListener('error', () => {
-      reject(new Error('Image not found'));
-    });
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        resolve(position);
+      },
+      err => {
+        reject(err);
+      }
+    );
   });
 };
 
-const imgContainer = document.querySelector('.images');
-createImage('./img/img-1.jpg')
-  .then(imageNode => {
-    imgContainer.appendChild(imageNode);
-    return wait(2, imageNode);
-  })
-  .then(imageNode => {
-    imageNode.style.display = 'none';
-    return createImage('./img/img-2.jpg');
-  })
-  .then(imageNode2 => {
-    imgContainer.appendChild(imageNode2);
-    return wait(2, imageNode2);
-  })
-  .then(imageNode2 => {
-    imageNode2.style.display = 'none';
-  })
-  .catch(err => {
+const whereAmI = async function () {
+  try {
+    const curCoordinates = await getCurPosition();
+    const { latitude: lat, longitude: long } = curCoordinates.coords;
+    const curCountryResponse = await fetch(
+      `https://geocode.xyz/${lat},${long}?geoit=json`
+    );
+    if (!curCountryResponse.ok) {
+      throw new Error(`Overload the request`);
+    }
+    const curCountryData = await curCountryResponse.json();
+    const countryResponse = await fetch(
+      `https://restcountries.eu/rest/v2/name/${curCountryData.country}`
+    );
+    if (!countryResponse.ok) {
+      throw new Error(`Country not found`);
+    }
+    const countryData = await countryResponse.json();
+    renderCountry(countryData[0]);
+    return `Im in ${curCountryData.city} city, ${curCountryData.country}`;
+  } catch (err) {
     console.error(err);
-  });
+    throw err;
+  }
+};
+// whereAmI()
+//   .then(data => {
+//     console.log(`2 : ${data}`);
+//   })
+//   .catch(err => {
+//     console.error(`2: ${err}`);
+//   });
+console.log(`1 Begin`);
+(async function () {
+  try {
+    const data = await whereAmI();
+    console.log(`2 : ${data}`);
+  } catch (err) {
+    console.error(`2 : ${err.message}`);
+  }
+})();
+console.log(`3 End`);
