@@ -354,8 +354,46 @@ function getJSON(url, errorMSG = `Something went wrong`) {
 // })();
 // console.log(`3 End`);
 
-///////////////////////////////// RUNNING PROMISES IN PARALLEL
+// ///////////////////////////////// RUNNING PROMISES IN PARALLEL
 
+// const whereAmI = async function (country) {
+//   try {
+//     const countryResponse = await fetch(
+//       `https://restcountries.eu/rest/v2/name/${country}`
+//     );
+//     if (!countryResponse.ok) {
+//       throw new Error(`Country not found`);
+//     }
+//     const countryData = await countryResponse.json();
+//     return countryData;
+//   } catch (err) {
+//     console.error(err);
+//     throw err;
+//   }
+// };
+// const runPromiseInParallel = async function (c1, c2, c3) {
+//   const countries = await Promise.all([
+//     whereAmI(c1),
+//     whereAmI(c2),
+//     whereAmI(c3),
+//   ]);
+//   const capitals = countries.map(value => {
+//     return value[0].capital;
+//   });
+//   console.log(capitals);
+// };
+// // whereAmI()
+// //   .then(data => {
+// //     console.log(`2 : ${data}`);
+// //   })
+// //   .catch(err => {
+// //     console.error(`2: ${err}`);
+// //   });
+// console.log(`1 Begin`);
+// runPromiseInParallel('Vietnam', 'China', 'Japan');
+// console.log(`3 End`);
+
+///////////////////////////////// PROMISE COMBINATORS
 const whereAmI = async function (country) {
   try {
     const countryResponse = await fetch(
@@ -371,24 +409,51 @@ const whereAmI = async function (country) {
     throw err;
   }
 };
-const runPromiseInParallel = async function (c1, c2, c3) {
-  const countries = await Promise.all([
-    whereAmI(c1),
-    whereAmI(c2),
-    whereAmI(c3),
-  ]);
-  const capitals = countries.map(value => {
-    return value[0].capital;
+const overtime = function (seconds) {
+  return new Promise((_, reject) => {
+    setTimeout(() => {
+      reject(new Error(`Request took too long`));
+    }, seconds * 1000);
   });
-  console.log(capitals);
 };
-// whereAmI()
-//   .then(data => {
-//     console.log(`2 : ${data}`);
-//   })
-//   .catch(err => {
-//     console.error(`2: ${err}`);
-//   });
-console.log(`1 Begin`);
-runPromiseInParallel('Vietnam', 'China', 'Japan');
-console.log(`3 End`);
+/////// Promise.race
+(async function () {
+  try {
+    const data = await Promise.race([
+      whereAmI('Vietnam'),
+      whereAmI('China'),
+      whereAmI('Japan'),
+      overtime(0.1),
+    ]);
+    console.log(data[0]);
+  } catch (err) {
+    console.error(err);
+  }
+})();
+
+///////// Promise.allSettled
+(async function () {
+  try {
+    const result = await Promise.allSettled([
+      Promise.resolve('Success'),
+      Promise.reject('Error'),
+      Promise.resolve('Another Success'),
+    ]);
+    console.log(result);
+  } catch (err) {
+    console.error(err);
+  }
+})();
+
+///////// Promise.any
+(async function () {
+  try {
+    const result = await Promise.any([
+      Promise.reject(new Error(`First Error`)),
+      Promise.reject(new Error(`Second Error`)),
+      Promise.resolve('Success1'),
+      Promise.resolve('Success2'),
+    ]);
+    console.log(result);
+  } catch (err) {}
+})();
