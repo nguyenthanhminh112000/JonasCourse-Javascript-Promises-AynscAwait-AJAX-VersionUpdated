@@ -297,44 +297,90 @@ function getJSON(url, errorMSG = `Something went wrong`) {
 //     console.error(err);
 //   });
 
-///////////////////////////////// CONSUME PROMISE WITH ASYNC-AWAIT
-const getCurPosition = () => {
-  return new Promise((resolve, reject) => {
-    navigator.geolocation.getCurrentPosition(
-      position => {
-        resolve(position);
-      },
-      err => {
-        reject(err);
-      }
-    );
-  });
-};
+// ///////////////////////////////// CONSUME PROMISE WITH ASYNC-AWAIT
+// const getCurPosition = () => {
+//   return new Promise((resolve, reject) => {
+//     navigator.geolocation.getCurrentPosition(
+//       position => {
+//         resolve(position);
+//       },
+//       err => {
+//         reject(err);
+//       }
+//     );
+//   });
+// };
 
-const whereAmI = async function () {
+// const whereAmI = async function () {
+//   try {
+//     const curCoordinates = await getCurPosition();
+//     const { latitude: lat, longitude: long } = curCoordinates.coords;
+//     const curCountryResponse = await fetch(
+//       `https://geocode.xyz/${lat},${long}?geoit=json`
+//     );
+//     if (!curCountryResponse.ok) {
+//       throw new Error(`Overload the request`);
+//     }
+//     const curCountryData = await curCountryResponse.json();
+//     const countryResponse = await fetch(
+//       `https://restcountries.eu/rest/v2/name/${curCountryData.country}`
+//     );
+//     if (!countryResponse.ok) {
+//       throw new Error(`Country not found`);
+//     }
+//     const countryData = await countryResponse.json();
+//     renderCountry(countryData[0]);
+//     return `Im in ${curCountryData.city} city, ${curCountryData.country}`;
+//   } catch (err) {
+//     console.error(err);
+//     throw err;
+//   }
+// };
+// // whereAmI()
+// //   .then(data => {
+// //     console.log(`2 : ${data}`);
+// //   })
+// //   .catch(err => {
+// //     console.error(`2: ${err}`);
+// //   });
+// console.log(`1 Begin`);
+// (async function () {
+//   try {
+//     const data = await whereAmI();
+//     console.log(`2 : ${data}`);
+//   } catch (err) {
+//     console.error(`2 : ${err.message}`);
+//   }
+// })();
+// console.log(`3 End`);
+
+///////////////////////////////// RUNNING PROMISES IN PARALLEL
+
+const whereAmI = async function (country) {
   try {
-    const curCoordinates = await getCurPosition();
-    const { latitude: lat, longitude: long } = curCoordinates.coords;
-    const curCountryResponse = await fetch(
-      `https://geocode.xyz/${lat},${long}?geoit=json`
-    );
-    if (!curCountryResponse.ok) {
-      throw new Error(`Overload the request`);
-    }
-    const curCountryData = await curCountryResponse.json();
     const countryResponse = await fetch(
-      `https://restcountries.eu/rest/v2/name/${curCountryData.country}`
+      `https://restcountries.eu/rest/v2/name/${country}`
     );
     if (!countryResponse.ok) {
       throw new Error(`Country not found`);
     }
     const countryData = await countryResponse.json();
-    renderCountry(countryData[0]);
-    return `Im in ${curCountryData.city} city, ${curCountryData.country}`;
+    return countryData;
   } catch (err) {
     console.error(err);
     throw err;
   }
+};
+const runPromiseInParallel = async function (c1, c2, c3) {
+  const countries = await Promise.all([
+    whereAmI(c1),
+    whereAmI(c2),
+    whereAmI(c3),
+  ]);
+  const capitals = countries.map(value => {
+    return value[0].capital;
+  });
+  console.log(capitals);
 };
 // whereAmI()
 //   .then(data => {
@@ -344,12 +390,5 @@ const whereAmI = async function () {
 //     console.error(`2: ${err}`);
 //   });
 console.log(`1 Begin`);
-(async function () {
-  try {
-    const data = await whereAmI();
-    console.log(`2 : ${data}`);
-  } catch (err) {
-    console.error(`2 : ${err.message}`);
-  }
-})();
+runPromiseInParallel('Vietnam', 'China', 'Japan');
 console.log(`3 End`);
