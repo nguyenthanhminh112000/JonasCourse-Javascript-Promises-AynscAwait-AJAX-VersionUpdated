@@ -393,67 +393,124 @@ function getJSON(url, errorMSG = `Something went wrong`) {
 // runPromiseInParallel('Vietnam', 'China', 'Japan');
 // console.log(`3 End`);
 
-///////////////////////////////// PROMISE COMBINATORS
-const whereAmI = async function (country) {
-  try {
-    const countryResponse = await fetch(
-      `https://restcountries.eu/rest/v2/name/${country}`
-    );
-    if (!countryResponse.ok) {
-      throw new Error(`Country not found`);
-    }
-    const countryData = await countryResponse.json();
-    return countryData;
-  } catch (err) {
-    console.error(err);
-    throw err;
-  }
-};
-const overtime = function (seconds) {
-  return new Promise((_, reject) => {
+// ///////////////////////////////// PROMISE COMBINATORS
+// const whereAmI = async function (country) {
+//   try {
+//     const countryResponse = await fetch(
+//       `https://restcountries.eu/rest/v2/name/${country}`
+//     );
+//     if (!countryResponse.ok) {
+//       throw new Error(`Country not found`);
+//     }
+//     const countryData = await countryResponse.json();
+//     return countryData;
+//   } catch (err) {
+//     console.error(err);
+//     throw err;
+//   }
+// };
+// const overtime = function (seconds) {
+//   return new Promise((_, reject) => {
+//     setTimeout(() => {
+//       reject(new Error(`Request took too long`));
+//     }, seconds * 1000);
+//   });
+// };
+// /////// Promise.race
+// (async function () {
+//   try {
+//     const data = await Promise.race([
+//       whereAmI('Vietnam'),
+//       whereAmI('China'),
+//       whereAmI('Japan'),
+//       overtime(0.1),
+//     ]);
+//     console.log(data[0]);
+//   } catch (err) {
+//     console.error(err);
+//   }
+// })();
+
+// ///////// Promise.allSettled
+// (async function () {
+//   try {
+//     const result = await Promise.allSettled([
+//       Promise.resolve('Success'),
+//       Promise.reject('Error'),
+//       Promise.resolve('Another Success'),
+//     ]);
+//     console.log(result);
+//   } catch (err) {
+//     console.error(err);
+//   }
+// })();
+
+// ///////// Promise.any
+// (async function () {
+//   try {
+//     const result = await Promise.any([
+//       Promise.reject(new Error(`First Error`)),
+//       Promise.reject(new Error(`Second Error`)),
+//       Promise.resolve('Success1'),
+//       Promise.resolve('Success2'),
+//     ]);
+//     console.log(result);
+//   } catch (err) {}
+// })();
+
+// ///////////////////////////////// FINAL CODING CHALLENGE
+//Part 1
+const wait = seconds => {
+  return new Promise(resolve => {
     setTimeout(() => {
-      reject(new Error(`Request took too long`));
+      resolve();
     }, seconds * 1000);
   });
 };
-/////// Promise.race
-(async function () {
+const createImage = url => {
+  return new Promise((resolve, reject) => {
+    const imageNode = document.createElement('img');
+    imageNode.src = url;
+    imageNode.addEventListener('load', () => {
+      resolve(imageNode);
+    });
+    imageNode.addEventListener('error', () => {
+      reject(new Error('Image not found'));
+    });
+  });
+};
+
+const imgContainer = document.querySelector('.images');
+const loadDelayImage = async function () {
   try {
-    const data = await Promise.race([
-      whereAmI('Vietnam'),
-      whereAmI('China'),
-      whereAmI('Japan'),
-      overtime(0.1),
-    ]);
-    console.log(data[0]);
+    let imageNode = await createImage('./img/img-1.jpg');
+    imgContainer.append(imageNode);
+    await wait(2);
+    imageNode.style.display = 'none';
+    imageNode = await createImage('./img/img-2.jpg');
+    imgContainer.append(imageNode);
+    await wait(2);
+    imageNode.style.display = 'none';
   } catch (err) {
     console.error(err);
   }
-})();
-
-///////// Promise.allSettled
-(async function () {
+};
+//loadDelayImage();
+// Part 2
+const imgArr = ['./img/img-1.jpg', './img/img-2.jpg', './img/img-3.jpg'];
+const loadAll = async function (imgArr) {
   try {
-    const result = await Promise.allSettled([
-      Promise.resolve('Success'),
-      Promise.reject('Error'),
-      Promise.resolve('Another Success'),
-    ]);
-    console.log(result);
+    const imgs = imgArr.map(async path => {
+      return await createImage(path);
+    });
+    const imgss = await Promise.all(imgs);
+    imgss.map(imgss => {
+      imgContainer.append(imgss);
+      imgss.className = 'parallel';
+    });
+    console.log(imgss);
   } catch (err) {
     console.error(err);
   }
-})();
-
-///////// Promise.any
-(async function () {
-  try {
-    const result = await Promise.any([
-      Promise.reject(new Error(`First Error`)),
-      Promise.reject(new Error(`Second Error`)),
-      Promise.resolve('Success1'),
-      Promise.resolve('Success2'),
-    ]);
-    console.log(result);
-  } catch (err) {}
-})();
+};
+loadAll(imgArr);
